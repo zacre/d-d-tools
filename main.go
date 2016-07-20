@@ -1,8 +1,9 @@
 package main
 
 import (
-	"d-d-tools/ddtools"
-	"sort"
+  "sort"
+
+	"github.com/zacre/d-d-tools/ddtools"
 )
 
 func main() {
