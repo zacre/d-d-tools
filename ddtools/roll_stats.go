@@ -3,25 +3,34 @@ package ddtools
 import (
 	"fmt"
 	"math/rand"
-	"sort"
 	"strconv"
 	"time"
 )
 
 func RollAbilityScores() []int {
 	scores := make([]int, 6, 6)
-	rolls_tmp := make([]int, 4, 4)
+	var rolls [4]int
 	rand.Seed(time.Now().Unix())
 	// get 6 ability scores
-	for i := 0; i < 6; i++ {
+	for i := range scores {
 		// roll 4d6
-		for j := 0; j < 4; j++ {
+		for j := range rolls {
 			// Intn(6) makes numbers from 0 to 5
-			rolls_tmp[j] = rand.Intn(6) + 1
+			rolls[j] = rand.Intn(6) + 1
+		}
+		// get index of lowest val
+		lowest := 0
+		for j := range rolls {
+			if rolls[j] < rolls[lowest] {
+				lowest = j
+			}
 		}
 		// sum 3 highest rolls to get score
-		sort.Ints(rolls_tmp)
-		scores[i] = rolls_tmp[1] + rolls_tmp[2] + rolls_tmp[3]
+		for j := range rolls {
+			if j != lowest {
+				scores[i] += rolls[j]
+			}
+		}
 	}
 	return scores
 }

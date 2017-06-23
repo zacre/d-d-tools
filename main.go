@@ -1,13 +1,15 @@
 package main
 
-import (
-  "sort"
-
-	"github.com/zacre/d-d-tools/ddtools"
-)
+import "github.com/zacre/d-d-tools/ddtools"
 
 func main() {
-	abilityScores := ddtools.RollAbilityScores()
-	sort.Sort(sort.Reverse(sort.IntSlice(abilityScores)))
-	ddtools.PrintAbilityScores(abilityScores)
+	/*
+		// Roll six ability scores
+		abilityScores := ddtools.RollAbilityScores()
+		// Sort from highest to lowest
+		sort.Sort(sort.Reverse(sort.IntSlice(abilityScores)))
+		// Print ability scores and modifiers
+		ddtools.PrintAbilityScores(abilityScores)
+	*/
+	ddtools.RollCharacter()
 }
