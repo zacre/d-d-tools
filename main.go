@@ -11,7 +11,6 @@ import (
 	"github.com/zacre/d-d-tools/character"
 )
 
-// TODO: make an interactive character generator!
 /*
 First greet the user
 Then roll some stats, and ask which stats the user wants to put them in
@@ -20,7 +19,7 @@ Then let the user choose a race, or choose a random one (TODO: suggest a recomme
 func main() {
 	fmt.Printf("\nWelcome to the D&D character generator! This program will generate a new character for you.\n\n")
 	rawAbilityScores := rollAbilityScores()
-	c := assignAbilityScores(rawAbilityScores)
+	c := createCharacter(rawAbilityScores)
 	printCharacter(c)
 }
 
@@ -31,28 +30,33 @@ func rollAbilityScores() []npcgen.AbilityScore {
 	return rawAbilityScores
 }
 
-func assignAbilityScores(rawAbilityScores []npcgen.AbilityScore) character.Character {
+func createCharacter(rawAbilityScores []npcgen.AbilityScore) character.Character {
+	c := character.Character{}
+	assignAbilityScores(&c, rawAbilityScores)
+	return c
+}
+
+func assignAbilityScores(c *character.Character, rawAbilityScores []npcgen.AbilityScore) {
 	// Decide which method of assigning ability scores should be used
-	return assignAbilityScoresByChoice(rawAbilityScores)
+	assignAbilityScoresByChoice(c, rawAbilityScores)
 }
 
 // Ability scores are assigned in order
-func assignAbilityScoresStraightDown(rawAbilityScores []npcgen.AbilityScore) character.Character {
+func assignAbilityScoresStraightDown(c *character.Character, rawAbilityScores []npcgen.AbilityScore) {
 	fmt.Printf("The following numbers were rolled for your base ability scores:\n")
 	fmt.Printf("%v, %v, %v, %v, %v, %v.\n", rawAbilityScores[0], rawAbilityScores[1], rawAbilityScores[2], rawAbilityScores[3], rawAbilityScores[4], rawAbilityScores[5])
 
 	fmt.Printf("The rolled numbers will be assigned to your ability score statistics in the order they were rolled.\n")
-	c := character.Character{AbilityScores: character.SimpleAssignAbilityScores(rawAbilityScores)}
-	return c
+	c.SetAbilityScores(character.SimpleAssignAbilityScores(rawAbilityScores))
 }
 
-func assignAbilityScoresByChoice(rawAbilityScores []npcgen.AbilityScore) character.Character {
+func assignAbilityScoresByChoice(c *character.Character, rawAbilityScores []npcgen.AbilityScore) {
 	// Sort raw ability scores from highest to lowest (note reverse '>' operator for less function)
 	sort.Slice(rawAbilityScores, func(i, j int) bool { return rawAbilityScores[i] > rawAbilityScores[j] })
 	fmt.Printf("The following numbers were rolled for your base ability scores:\n")
 	fmt.Printf("%v, %v, %v, %v, %v, %v.\n", rawAbilityScores[0], rawAbilityScores[1], rawAbilityScores[2], rawAbilityScores[3], rawAbilityScores[4], rawAbilityScores[5])
 
-	c := character.Character{}
+	as := npcgen.AbilityScores{}
 	fmt.Printf("You must now choose which ability score each value should be assigned to.\n")
 	// fmt.Println("Enter 1 for Str, 2 for Dex, 3 for Con, 4 for Int, 5 for Wis, or 6 for Cha")
 	var isAssigned [6]bool
@@ -74,7 +78,7 @@ func assignAbilityScoresByChoice(rawAbilityScores []npcgen.AbilityScore) charact
 		}
 		// If chosen stat is already assigned, tell the user to choose a different stat
 		if isAssigned[choice-1] {
-			fmt.Printf("You already assigned a value to %s. Choose a different stat (ability scores still to assign: ", character.Abilities[statVal-1])
+			fmt.Printf("You already assigned a value to %s. Choose a different stat (ability scores still to assign: ", character.Abilities[choice-1])
 			notYetAssigned := make([]string, 0, 6)
 			for i := range isAssigned {
 				if !isAssigned[i] {
@@ -93,17 +97,17 @@ func assignAbilityScoresByChoice(rawAbilityScores []npcgen.AbilityScore) charact
 		// Assign the correct ability score
 		switch choice {
 		case 1:
-			c.AbilityScores.Str = rawAbilityScores[statVal]
+			as.Str = rawAbilityScores[statVal]
 		case 2:
-			c.AbilityScores.Dex = rawAbilityScores[statVal]
+			as.Dex = rawAbilityScores[statVal]
 		case 3:
-			c.AbilityScores.Con = rawAbilityScores[statVal]
+			as.Con = rawAbilityScores[statVal]
 		case 4:
-			c.AbilityScores.Int = rawAbilityScores[statVal]
+			as.Int = rawAbilityScores[statVal]
 		case 5:
-			c.AbilityScores.Wis = rawAbilityScores[statVal]
+			as.Wis = rawAbilityScores[statVal]
 		case 6:
-			c.AbilityScores.Cha = rawAbilityScores[statVal]
+			as.Cha = rawAbilityScores[statVal]
 		default:
 			fmt.Printf("WARNING: Choice is outside the range [1-6]. This should never happen, trying again.\n")
 			continue
@@ -113,7 +117,7 @@ func assignAbilityScoresByChoice(rawAbilityScores []npcgen.AbilityScore) charact
 		statVal++
 	}
 	fmt.Println()
-	return c
+	c.SetAbilityScores(as)
 }
 
 func printCharacter(c character.Character) {

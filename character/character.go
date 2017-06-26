@@ -7,16 +7,14 @@ type Character struct {
 	AbilityScores npcgen.AbilityScores
 }
 
-// Create creates a new character
-func Create(abilityScores npcgen.AbilityScores) Character {
+// SetAbilityScores sets a character's ability scores to those provided
+func (c *Character) SetAbilityScores(abilityScores npcgen.AbilityScores) {
 	// Roll ability scores
 	// TODO: choose method (4d6 drop low, 3d6, standard array)
 	// TODO: Choose race
 	// Note: choose method (choice, roll)
 	// TODO: Decide on background
-	c := Character{AbilityScores: abilityScores}
-
-	return c
+	c.AbilityScores =  abilityScores
 }
 
 // Print prints the details of a character
