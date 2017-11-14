@@ -18,7 +18,43 @@ Then let the user choose a race, or choose a random one (TODO: suggest a recomme
 */
 func main() {
 	fmt.Printf("\nWelcome to the D&D character generator! This program will generate a new character for you.\n\n")
-	rawAbilityScores := rollAbilityScores()
+	var rawAbilityScores []npcgen.AbilityScore
+	fmt.Printf("What method would you like to use to determine your ability scores?\n")
+	fmt.Printf(
+		`1. Rolling 4d6 drop the lowest
+2. Standard array (15, 14, 13, 12, 10, 8)
+3. Best of 3: Rolling 4d6 drop the lowest
+4. Heroic array (16, 15, 14, 12, 11, 10
+`)
+	fmt.Printf("Enter your choice: ")
+	input := ""
+	_, err := fmt.Scanf("%s\n", &input)
+	if err != nil {
+		fmt.Printf("Invalid input, expecting a number between 1 and 4\n")
+		return
+	}
+	choice, err := strconv.Atoi(string([]rune(input)[0]))
+	if err != nil || choice < 1 || choice > 4 {
+		fmt.Printf("Invalid input, expecting a number between 1 and 4\n")
+		return
+	}
+	switch choice {
+	case 1:
+		rawAbilityScores = rollAbilityScores()
+	case 2:
+		rawAbilityScores = []npcgen.AbilityScore{15, 14, 13, 12, 10, 8}
+	case 3:
+		rawAbilityScores = rollAbilityScoresBestOf3()
+	case 4:
+		rawAbilityScores = []npcgen.AbilityScore{16, 15, 14, 12, 11, 10}
+	default:
+		rawAbilityScores = nil
+	}
+	if rawAbilityScores == nil {
+		fmt.Printf("An error has occurred somehow; your choice of determining ability scores was %d, but this program doesn't recognise that\n", choice)
+		return
+	}
+	fmt.Println()
 	c := createCharacter(rawAbilityScores)
 	printCharacter(c)
 }
@@ -28,6 +64,21 @@ func rollAbilityScores() []npcgen.AbilityScore {
 	rand.Seed(time.Now().Unix())
 	rawAbilityScores := character.RollAbilityScores()
 	return rawAbilityScores
+}
+
+func rollAbilityScoresBestOf3() []npcgen.AbilityScore {
+	var threeAbilityScores [3][]npcgen.AbilityScore
+	largestSum := 0
+	largestIndex := 0
+	for i := 0; i < 3; i++ {
+		threeAbilityScores[i] = rollAbilityScores()
+		sum := character.SumAbilityScoresRaw(threeAbilityScores[i])
+		if sum > largestSum {
+			largestSum = sum
+			largestIndex = i
+		}
+	}
+	return threeAbilityScores[largestIndex]
 }
 
 func createCharacter(rawAbilityScores []npcgen.AbilityScore) character.Character {
@@ -43,8 +94,10 @@ func assignAbilityScores(c *character.Character, rawAbilityScores []npcgen.Abili
 
 // Ability scores are assigned in order
 func assignAbilityScoresStraightDown(c *character.Character, rawAbilityScores []npcgen.AbilityScore) {
-	fmt.Printf("The following numbers were rolled for your base ability scores:\n")
-	fmt.Printf("%v, %v, %v, %v, %v, %v.\n", rawAbilityScores[0], rawAbilityScores[1], rawAbilityScores[2], rawAbilityScores[3], rawAbilityScores[4], rawAbilityScores[5])
+	fmt.Printf("The following numbers were obtained for your base ability scores:\n")
+	fmt.Printf("%v, %v, %v, %v, %v, %v.", rawAbilityScores[0], rawAbilityScores[1], rawAbilityScores[2], rawAbilityScores[3], rawAbilityScores[4], rawAbilityScores[5])
+	fmt.Printf(" (Sum: %v)", rawAbilityScores[0]+rawAbilityScores[1]+rawAbilityScores[2]+rawAbilityScores[3]+rawAbilityScores[4]+rawAbilityScores[5])
+	fmt.Println()
 
 	fmt.Printf("The rolled numbers will be assigned to your ability score statistics in the order they were rolled.\n")
 	c.SetAbilityScores(character.SimpleAssignAbilityScores(rawAbilityScores))
@@ -53,8 +106,10 @@ func assignAbilityScoresStraightDown(c *character.Character, rawAbilityScores []
 func assignAbilityScoresByChoice(c *character.Character, rawAbilityScores []npcgen.AbilityScore) {
 	// Sort raw ability scores from highest to lowest (note reverse '>' operator for less function)
 	sort.Slice(rawAbilityScores, func(i, j int) bool { return rawAbilityScores[i] > rawAbilityScores[j] })
-	fmt.Printf("The following numbers were rolled for your base ability scores:\n")
-	fmt.Printf("%v, %v, %v, %v, %v, %v.\n", rawAbilityScores[0], rawAbilityScores[1], rawAbilityScores[2], rawAbilityScores[3], rawAbilityScores[4], rawAbilityScores[5])
+	fmt.Printf("The following numbers were obtained for your base ability scores:\n")
+	fmt.Printf("%v, %v, %v, %v, %v, %v.", rawAbilityScores[0], rawAbilityScores[1], rawAbilityScores[2], rawAbilityScores[3], rawAbilityScores[4], rawAbilityScores[5])
+	fmt.Printf(" (Sum: %v)", rawAbilityScores[0]+rawAbilityScores[1]+rawAbilityScores[2]+rawAbilityScores[3]+rawAbilityScores[4]+rawAbilityScores[5])
+	fmt.Println()
 
 	as := npcgen.AbilityScores{}
 	fmt.Printf("You must now choose which ability score each value should be assigned to.\n")
@@ -71,7 +126,7 @@ func assignAbilityScoresByChoice(c *character.Character, rawAbilityScores []npcg
 			continue
 		}
 		// Convert input to integer
-		choice, err := strconv.Atoi(input)
+		choice, err := strconv.Atoi(string([]rune(input)[0]))
 		if err != nil || choice < 1 || choice > 6 {
 			fmt.Printf("Invalid input, expecting a number between 1 and 6\n")
 			continue
@@ -124,4 +179,16 @@ func printCharacter(c character.Character) {
 	fmt.Println("Your character looks like this:")
 	c.Print()
 	fmt.Println("The sum of the ability score modifiers for these stats is", character.SumModifiers(c.AbilityScores))
+	decision := ""
+	switch tmp := character.SumModifiers(c.AbilityScores); {
+	case tmp <= 3:
+		decision = "Oh, those stats are a bit below average."
+	case tmp >= 4 && tmp <= 6:
+		decision = "Those stats are quite balanced overall."
+	case tmp >= 7 && tmp <= 9:
+		decision = "Nice job, those stats are pretty high!"
+	case tmp >= 10:
+		decision = "Congratulations, those are phenomenal stats!"
+	}
+	fmt.Println(decision)
 }

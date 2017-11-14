@@ -84,6 +84,21 @@ func modifierToString(modifier int) string {
 	return prepend + modifierString
 }
 
+func SumAbilityScoresRaw(scores []npcgen.AbilityScore) int {
+	return SumAbilityScores(SimpleAssignAbilityScores(scores))
+}
+
+func SumAbilityScores(scores npcgen.AbilityScores) int {
+	sum := 0
+	sum += int(scores.Str)
+	sum += int(scores.Dex)
+	sum += int(scores.Con)
+	sum += int(scores.Int)
+	sum += int(scores.Wis)
+	sum += int(scores.Cha)
+	return sum
+}
+
 func SumModifiersRaw(scores []npcgen.AbilityScore) int {
 	return SumModifiers(SimpleAssignAbilityScores(scores))
 }
