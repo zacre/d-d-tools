@@ -1,6 +1,7 @@
 package character
 
 import (
+	"errors"
 	"fmt"
 	"math/rand"
 	"strconv"
@@ -8,35 +9,62 @@ import (
 	"github.com/kiwih/npc-gen/npcgen"
 )
 
-var Abilities = []string{"Str", "Dex", "Con", "Int", "Wis", "Cha"}
+// Abilities is a helper array listing the names of the abilities in modern order
+var AbilityNames = []string{"Str", "Dex", "Con", "Int", "Wis", "Cha"}
 
 // RollAbilityScores rolls for six ability scores using the 4d6 drop lowest method. It returns a slice of six ability scores in the order they were generated.
 // Requires rand to be seeded before use
-func RollAbilityScores() []npcgen.AbilityScore {
+func RollAbilityScores(dice int, randSeeded bool) ([]npcgen.AbilityScore, error) {
+	if !randSeeded {
+		return nil, errors.New("Please seed rand for RollAbilityScores to work (e.g. `rand.Seed(time.Now().Unix())`")
+	}
+	rolls := make([]int, dice)
 	scores := make([]npcgen.AbilityScore, 6, 6)
-	var rolls [4]int
 	// get 6 ability scores
 	for i := range scores {
 		// roll 4d6
 		for j := range rolls {
 			// Intn(6) makes numbers from 0 to 5
 			rolls[j] = rand.Intn(6) + 1
+			fmt.Println("Rolled", rolls[j])
 		}
-		// get index of lowest val
-		lowest := 0
-		for j := range rolls {
-			if rolls[j] < rolls[lowest] {
-				lowest = j
-			}
-		}
-		// sum 3 highest rolls to get score
-		for j := range rolls {
-			if j != lowest {
+		if dice <= 3 {
+			// sum all dice to get score
+			fmt.Print("Adding")
+			for j := range rolls {
 				scores[i] += npcgen.AbilityScore(rolls[j])
+				fmt.Print("", npcgen.AbilityScore(rolls[j]))
 			}
+			fmt.Println(" =", scores[i])
+		} else {
+			// sum 3 highest rolls to get score
+			// NOTE: this assumption may need to change
+
+			// get index of 3 highest vals
+			var highest [3]int
+			// TODO: dedup
+			for j := range rolls {
+				if rolls[j] >= rolls[highest[0]] {
+					highest[2] = highest[1]
+					highest[1] = highest[0]
+					highest[0] = j
+				} else if rolls[j] <= rolls[highest[0]] && rolls[j] >= rolls[highest[1]] {
+					highest[2] = highest[1]
+					highest[1] = j
+				} else if rolls[j] <= rolls[highest[1]] && rolls[j] >= rolls[highest[2]] {
+					highest[2] = j
+				}
+			}
+			fmt.Print("Highest:")
+			for j := range highest {
+				fmt.Print(" ", rolls[highest[j]])
+			}
+			fmt.Println()
+			scores[i] += npcgen.AbilityScore(rolls[highest[0]] + rolls[highest[1]] + rolls[highest[2]])
+			fmt.Println("Adding", rolls[highest[0]], "+", rolls[highest[1]], "+", rolls[highest[2]], "=", scores[i])
 		}
 	}
-	return scores
+	return scores, nil
 }
 
 // SimpleAssignAbilityScores creates an AbilityScores struct from a slice of six ability score values
@@ -68,6 +96,7 @@ func PrintAbilityScores(scores npcgen.AbilityScores) {
 	fmt.Printf("Cha: %2v (%s)\n", scores.Cha, modifierToString(GetModifier(scores.Cha)))
 }
 
+// GetModifier obtains the ability score modifier from a raw ability score
 func GetModifier(score npcgen.AbilityScore) int {
 	modifier := int(score/2 - 5)
 	return modifier
@@ -84,10 +113,12 @@ func modifierToString(modifier int) string {
 	return prepend + modifierString
 }
 
+// SumAbilityScoresRaw calculates the sum of six ability scores in an array of AbilityScore
 func SumAbilityScoresRaw(scores []npcgen.AbilityScore) int {
 	return SumAbilityScores(SimpleAssignAbilityScores(scores))
 }
 
+// SumAbilityScores calculates the sum of the six scores in an AbilityScores struct
 func SumAbilityScores(scores npcgen.AbilityScores) int {
 	sum := 0
 	sum += int(scores.Str)
@@ -99,10 +130,12 @@ func SumAbilityScores(scores npcgen.AbilityScores) int {
 	return sum
 }
 
+// SumModifiersRaw calculates the sum of the six ability score modifiers calculated from an array of AbilityScore
 func SumModifiersRaw(scores []npcgen.AbilityScore) int {
 	return SumModifiers(SimpleAssignAbilityScores(scores))
 }
 
+// SumModifiers calculates the sum of the six ability score modifiers calculated from an AbilityScores struct
 func SumModifiers(scores npcgen.AbilityScores) int {
 	sum := 0
 	sum += GetModifier(scores.Str)

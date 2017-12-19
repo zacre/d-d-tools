@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math/rand"
+	"os"
 	"sort"
 	"strconv"
 	"time"
@@ -21,23 +22,28 @@ func main() {
 	var rawAbilityScores []npcgen.AbilityScore
 	fmt.Printf("What method would you like to use to determine your ability scores?\n")
 	fmt.Printf(
-		`1. Rolling 4d6 drop the lowest
-2. Standard array (15, 14, 13, 12, 10, 8)
-3. Best of 3: Rolling 4d6 drop the lowest
-4. Heroic array (16, 15, 14, 12, 11, 10
+		`1. Rolling 4d6 drop the lowest (Sum Avg: 73, SD: 7)
+2. Standard array (15, 14, 13, 12, 10, 8. Sum: 72)
+3. Best of 3: Rolling 4d6 drop the lowest (Sum Avg: 79, SD: 5)
+4. Heroic array (16, 15, 14, 12, 11, 10. Sum: 78)
+5. Rolling 5d6 drop the two lowest (Sum Avg: 81, SD: 6)
+6. Rolling 3d6 (Sum Avg: 63, SD: 7)
+7. Rolling 4d6 drop the lowest straight down
+8. Rolling 3d6 straight down
 `)
 	fmt.Printf("Enter your choice: ")
 	input := ""
 	_, err := fmt.Scanf("%s\n", &input)
 	if err != nil {
-		fmt.Printf("Invalid input, expecting a number between 1 and 4\n")
+		fmt.Printf("Invalid input, expecting a number between 1 and 8\n")
 		return
 	}
 	choice, err := strconv.Atoi(string([]rune(input)[0]))
-	if err != nil || choice < 1 || choice > 4 {
-		fmt.Printf("Invalid input, expecting a number between 1 and 4\n")
+	if err != nil || choice < 1 || choice > 8 {
+		fmt.Printf("Invalid input, expecting a number between 1 and 8\n")
 		return
 	}
+	assignStraight := false
 	switch choice {
 	case 1:
 		rawAbilityScores = rollAbilityScores()
@@ -47,6 +53,16 @@ func main() {
 		rawAbilityScores = rollAbilityScoresBestOf3()
 	case 4:
 		rawAbilityScores = []npcgen.AbilityScore{16, 15, 14, 12, 11, 10}
+	case 5:
+		rawAbilityScores = rollAbilityScores(5)
+	case 6:
+		rawAbilityScores = rollAbilityScores(3)
+	case 7:
+		rawAbilityScores = rollAbilityScores()
+		assignStraight = true
+	case 8:
+		rawAbilityScores = rollAbilityScores(3)
+		assignStraight = true
 	default:
 		rawAbilityScores = nil
 	}
@@ -55,14 +71,28 @@ func main() {
 		return
 	}
 	fmt.Println()
-	c := createCharacter(rawAbilityScores)
+	c := createCharacter(rawAbilityScores, assignStraight)
 	printCharacter(c)
 }
 
-func rollAbilityScores() []npcgen.AbilityScore {
+func rollAbilityScores(dice ...int) []npcgen.AbilityScore {
 	// Seed rand and roll six ability scores
 	rand.Seed(time.Now().Unix())
-	rawAbilityScores := character.RollAbilityScores()
+	randSeeded := true
+	diceToRoll := 4
+	for i, die := range dice {
+		// Only first option is investigated
+		if i == 0 {
+			diceToRoll = die
+		} else {
+			break
+		}
+	}
+	rawAbilityScores, err := character.RollAbilityScores(diceToRoll, randSeeded)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		os.Exit(1)
+	}
 	return rawAbilityScores
 }
 
@@ -81,15 +111,15 @@ func rollAbilityScoresBestOf3() []npcgen.AbilityScore {
 	return threeAbilityScores[largestIndex]
 }
 
-func createCharacter(rawAbilityScores []npcgen.AbilityScore) character.Character {
+// TODO: Currently only creates a set of ability scores, not a character
+func createCharacter(rawAbilityScores []npcgen.AbilityScore, assignStraight bool) character.Character {
 	c := character.Character{}
-	assignAbilityScores(&c, rawAbilityScores)
+	if assignStraight {
+		assignAbilityScoresStraightDown(&c, rawAbilityScores)
+	} else {
+		assignAbilityScoresByChoice(&c, rawAbilityScores)
+	}
 	return c
-}
-
-func assignAbilityScores(c *character.Character, rawAbilityScores []npcgen.AbilityScore) {
-	// Decide which method of assigning ability scores should be used
-	assignAbilityScoresByChoice(c, rawAbilityScores)
 }
 
 // Ability scores are assigned in order
@@ -133,11 +163,11 @@ func assignAbilityScoresByChoice(c *character.Character, rawAbilityScores []npcg
 		}
 		// If chosen stat is already assigned, tell the user to choose a different stat
 		if isAssigned[choice-1] {
-			fmt.Printf("You already assigned a value to %s. Choose a different stat (ability scores still to assign: ", character.Abilities[choice-1])
+			fmt.Printf("You already assigned a value to %s. Choose a different stat (ability scores still to assign: ", character.AbilityNames[choice-1])
 			notYetAssigned := make([]string, 0, 6)
 			for i := range isAssigned {
 				if !isAssigned[i] {
-					notYetAssigned = append(notYetAssigned, character.Abilities[i])
+					notYetAssigned = append(notYetAssigned, character.AbilityNames[i])
 				}
 			}
 			for i, statName := range notYetAssigned {
@@ -167,7 +197,7 @@ func assignAbilityScoresByChoice(c *character.Character, rawAbilityScores []npcg
 			fmt.Printf("WARNING: Choice is outside the range [1-6]. This should never happen, trying again.\n")
 			continue
 		}
-		fmt.Printf("Assigned the score %v to %v\n", rawAbilityScores[statVal], character.Abilities[choice-1])
+		fmt.Printf("Assigned the score %v to %v\n", rawAbilityScores[statVal], character.AbilityNames[choice-1])
 		isAssigned[choice-1] = true
 		statVal++
 	}
