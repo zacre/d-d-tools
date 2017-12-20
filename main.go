@@ -15,8 +15,10 @@ import (
 /*
 First greet the user
 Then roll some stats, and ask which stats the user wants to put them in
-Then let the user choose a race, or choose a random one (TODO: suggest a recommended race based on evening up ability scores or improving the highest)
 */
+// TODO: Then let the user choose a race, or choose a random one (also TODO: suggest a recommended race based on evening up ability scores or improving the highest)
+// TODO: Then decide on background, skills etc
+// TODO: Then choose a class!
 func main() {
 	fmt.Printf("\nWelcome to the D&D character generator! This program will generate a new character for you.\n\n")
 	var rawAbilityScores []npcgen.AbilityScore
@@ -32,6 +34,7 @@ func main() {
 8. Rolling 3d6 straight down
 `)
 	fmt.Printf("Enter your choice: ")
+	// Choose method (4d6 drop low, 3d6, standard array, etc.)
 	input := ""
 	_, err := fmt.Scanf("%s\n", &input)
 	if err != nil {
@@ -43,10 +46,13 @@ func main() {
 		fmt.Printf("Invalid input, expecting a number between 1 and 8\n")
 		return
 	}
+	// This determines whether ability scores are assigned "straight" (i.e. in the order they were rolled) or by user choice
 	assignStraight := false
+
+	// Determine base ability scores (from rolling, point buy, etc.)
 	switch choice {
 	case 1:
-		rawAbilityScores = rollAbilityScores()
+		rawAbilityScores = rollAbilityScores(4)
 	case 2:
 		rawAbilityScores = []npcgen.AbilityScore{15, 14, 13, 12, 10, 8}
 	case 3:
@@ -58,7 +64,7 @@ func main() {
 	case 6:
 		rawAbilityScores = rollAbilityScores(3)
 	case 7:
-		rawAbilityScores = rollAbilityScores()
+		rawAbilityScores = rollAbilityScores(4)
 		assignStraight = true
 	case 8:
 		rawAbilityScores = rollAbilityScores(3)
@@ -75,6 +81,7 @@ func main() {
 	printCharacter(c)
 }
 
+// Input determines how many dice are rolled. With 0 arguments, defaults to 4, but with 1 argument, uses the input number instead
 func rollAbilityScores(dice ...int) []npcgen.AbilityScore {
 	// Seed rand and roll six ability scores
 	rand.Seed(time.Now().Unix())
@@ -101,7 +108,7 @@ func rollAbilityScoresBestOf3() []npcgen.AbilityScore {
 	largestSum := 0
 	largestIndex := 0
 	for i := 0; i < 3; i++ {
-		threeAbilityScores[i] = rollAbilityScores()
+		threeAbilityScores[i] = rollAbilityScores(4)
 		sum := character.SumAbilityScoresRaw(threeAbilityScores[i])
 		if sum > largestSum {
 			largestSum = sum

@@ -40,7 +40,6 @@ var (
 		},
 		HasSubRace: true,
 	}
-
 	// HighElf has the base elf bonus plus the high elf special bonus
 	HighElf = SubRace{
 		Name: "High Elf",
@@ -49,7 +48,6 @@ var (
 		},
 		Race: Elf,
 	}
-
 	// WoodElf has the base elf bonus plus the wood elf special bonus
 	WoodElf = SubRace{
 		Name: "Wood Elf",
@@ -58,7 +56,6 @@ var (
 		},
 		Race: Elf,
 	}
-
 	// DarkElf has the base elf bonus plus the dark elf special bonus
 	DarkElf = SubRace{
 		Name: "Dark Elf",
@@ -76,6 +73,22 @@ var (
 		},
 		HasSubRace: true,
 	}
+	// MountainDwarf has the base dwarf bonus plus the mountain dwarf special bonus
+	MountainDwarf = SubRace{
+		Name: "Mountain Dwarf",
+		AbilityScoreBonuses: npcgen.AbilityScores{
+			Str: 2,
+		},
+		Race: Dwarf,
+	}
+	// HillDwarf has the base dwarf bonus plus the hill dwarf special bonus
+	HillDwarf = SubRace{
+		Name: "Hill Dwarf",
+		AbilityScoreBonuses: npcgen.AbilityScores{
+			Wis: 1,
+		},
+		Race: Dwarf,
+	}
 
 	// Halfling has the base halfling stat bonuses
 	Halfling = Race{
@@ -84,5 +97,21 @@ var (
 			Dex: 2,
 		},
 		HasSubRace: true,
+	}
+	// LightfootHalfling has the base halfling bonus plus the lightfoot halfling special bonus
+	LightfootHalfling = SubRace{
+		Name: "Lightfoot Halfling",
+		AbilityScoreBonuses: npcgen.AbilityScores{
+			Cha: 1,
+		},
+		Race: Halfling,
+	}
+	// StoutHalfling has the base halfling bonus plus the stout halfling special bonus
+	StoutHalfling = SubRace{
+		Name: "Stout Halfling",
+		AbilityScoreBonuses: npcgen.AbilityScores{
+			Con: 1,
+		},
+		Race: Halfling,
 	}
 )

@@ -9,12 +9,7 @@ type Character struct {
 
 // SetAbilityScores sets a character's ability scores to those provided
 func (c *Character) SetAbilityScores(abilityScores npcgen.AbilityScores) {
-	// Roll ability scores
-	// TODO: choose method (4d6 drop low, 3d6, standard array)
-	// TODO: Choose race
-	// Note: choose method (choice, roll)
-	// TODO: Decide on background
-	c.AbilityScores =  abilityScores
+	c.AbilityScores = abilityScores
 }
 
 // Print prints the details of a character

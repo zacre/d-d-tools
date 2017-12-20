@@ -22,7 +22,7 @@ func RollAbilityScores(dice int, randSeeded bool) ([]npcgen.AbilityScore, error)
 	scores := make([]npcgen.AbilityScore, 6, 6)
 	// get 6 ability scores
 	for i := range scores {
-		// roll 4d6
+		// roll Nd6 where N == var dice
 		for j := range rolls {
 			// Intn(6) makes numbers from 0 to 5
 			rolls[j] = rand.Intn(6) + 1
@@ -39,19 +39,27 @@ func RollAbilityScores(dice int, randSeeded bool) ([]npcgen.AbilityScore, error)
 		} else {
 			// sum 3 highest rolls to get score
 			// NOTE: this assumption may need to change
-
-			// get index of 3 highest vals
 			var highest [3]int
-			// TODO: dedup
 			for j := range rolls {
 				if rolls[j] >= rolls[highest[0]] {
+					// If this number is higher than the value of highest[0], stick it on top and shift everything down
 					highest[2] = highest[1]
 					highest[1] = highest[0]
 					highest[0] = j
 				} else if rolls[j] <= rolls[highest[0]] && rolls[j] >= rolls[highest[1]] {
+					// If this number is lower than the value of highest[0] but higher than the value of highest[1], stick it at highest[1] and shift everything below down
 					highest[2] = highest[1]
 					highest[1] = j
 				} else if rolls[j] <= rolls[highest[1]] && rolls[j] >= rolls[highest[2]] {
+					// If this number is lower than the value of highest[0] and highest[1] but higher than the value of highest[2], stick it at highest[2] and shift everything below down
+					highest[2] = j
+				} else if highest[0] == highest[1] {
+					// If highest[0] and highest[1] are the same index number (e.g. both initialised to 0) put this number in the array anyway (to prevent final array having duplicate references)
+					// Make it both highest[1] and highest[2] so the next clause will trigger next loop
+					highest[2] = j
+					highest[1] = j
+				} else if highest[1] == highest[2] {
+					// If highest[1] and highest[2] are the same index number (e.g. both initialised to 0) put this number in the array anyway (to prevent final array having duplicate references)
 					highest[2] = j
 				}
 			}
