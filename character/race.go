@@ -73,19 +73,19 @@ var (
 		},
 		HasSubRace: true,
 	}
-	// MountainDwarf has the base dwarf bonus plus the mountain dwarf special bonus
-	MountainDwarf = SubRace{
-		Name: "Mountain Dwarf",
-		AbilityScoreBonuses: npcgen.AbilityScores{
-			Str: 2,
-		},
-		Race: Dwarf,
-	}
 	// HillDwarf has the base dwarf bonus plus the hill dwarf special bonus
 	HillDwarf = SubRace{
 		Name: "Hill Dwarf",
 		AbilityScoreBonuses: npcgen.AbilityScores{
 			Wis: 1,
+		},
+		Race: Dwarf,
+	}
+	// MountainDwarf has the base dwarf bonus plus the mountain dwarf special bonus
+	MountainDwarf = SubRace{
+		Name: "Mountain Dwarf",
+		AbilityScoreBonuses: npcgen.AbilityScores{
+			Str: 2,
 		},
 		Race: Dwarf,
 	}

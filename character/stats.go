@@ -9,7 +9,7 @@ import (
 	"github.com/kiwih/npc-gen/npcgen"
 )
 
-// Abilities is a helper array listing the names of the abilities in modern order
+// AbilityNames is a helper array listing the names of the abilities in modern order
 var AbilityNames = []string{"Str", "Dex", "Con", "Int", "Wis", "Cha"}
 
 // RollAbilityScores rolls for six ability scores using the 4d6 drop lowest method. It returns a slice of six ability scores in the order they were generated.
@@ -26,16 +26,12 @@ func RollAbilityScores(dice int, randSeeded bool) ([]npcgen.AbilityScore, error)
 		for j := range rolls {
 			// Intn(6) makes numbers from 0 to 5
 			rolls[j] = rand.Intn(6) + 1
-			fmt.Println("Rolled", rolls[j])
 		}
 		if dice <= 3 {
 			// sum all dice to get score
-			fmt.Print("Adding")
 			for j := range rolls {
 				scores[i] += npcgen.AbilityScore(rolls[j])
-				fmt.Print("", npcgen.AbilityScore(rolls[j]))
 			}
-			fmt.Println(" =", scores[i])
 		} else {
 			// sum 3 highest rolls to get score
 			// NOTE: this assumption may need to change
@@ -63,19 +59,13 @@ func RollAbilityScores(dice int, randSeeded bool) ([]npcgen.AbilityScore, error)
 					highest[2] = j
 				}
 			}
-			fmt.Print("Highest:")
-			for j := range highest {
-				fmt.Print(" ", rolls[highest[j]])
-			}
-			fmt.Println()
 			scores[i] += npcgen.AbilityScore(rolls[highest[0]] + rolls[highest[1]] + rolls[highest[2]])
-			fmt.Println("Adding", rolls[highest[0]], "+", rolls[highest[1]], "+", rolls[highest[2]], "=", scores[i])
 		}
 	}
 	return scores, nil
 }
 
-// SimpleAssignAbilityScores creates an AbilityScores struct from a slice of six ability score values
+// SimpleAssignAbilityScores creates an AbilityScores struct from a slice of six ability score values, taking the values in order
 func SimpleAssignAbilityScores(baseScores []npcgen.AbilityScore) npcgen.AbilityScores {
 	var abilityScores npcgen.AbilityScores
 	abilityScores.Str = npcgen.AbilityScore(baseScores[0])
@@ -85,23 +75,6 @@ func SimpleAssignAbilityScores(baseScores []npcgen.AbilityScore) npcgen.AbilityS
 	abilityScores.Wis = npcgen.AbilityScore(baseScores[4])
 	abilityScores.Cha = npcgen.AbilityScore(baseScores[5])
 	return abilityScores
-}
-
-// PrintRawAbilityScores prints out a slice of ability scores
-func PrintRawAbilityScores(scores []npcgen.AbilityScore) {
-	for _, score := range scores {
-		fmt.Printf("%v:\t%s\n", score, modifierToString(GetModifier(score)))
-	}
-}
-
-// PrintAbilityScores prints an AbilityScores struct
-func PrintAbilityScores(scores npcgen.AbilityScores) {
-	fmt.Printf("Str: %2v (%s)\n", scores.Str, modifierToString(GetModifier(scores.Str)))
-	fmt.Printf("Dex: %2v (%s)\n", scores.Dex, modifierToString(GetModifier(scores.Dex)))
-	fmt.Printf("Con: %2v (%s)\n", scores.Con, modifierToString(GetModifier(scores.Con)))
-	fmt.Printf("Int: %2v (%s)\n", scores.Int, modifierToString(GetModifier(scores.Int)))
-	fmt.Printf("Wis: %2v (%s)\n", scores.Wis, modifierToString(GetModifier(scores.Wis)))
-	fmt.Printf("Cha: %2v (%s)\n", scores.Cha, modifierToString(GetModifier(scores.Cha)))
 }
 
 // GetModifier obtains the ability score modifier from a raw ability score
@@ -117,8 +90,20 @@ func modifierToString(modifier int) string {
 		prepend = "+"
 	} else if modifier == 0 {
 		prepend = " "
-	}
+	} // '-' already included from Itoa
 	return prepend + modifierString
+}
+
+// AddAbilityScores adds two sets of AbilityScore structs together
+func AddAbilityScores(scores npcgen.AbilityScores, scores2 npcgen.AbilityScores) npcgen.AbilityScores {
+	var result npcgen.AbilityScores
+	result.Str = scores.Str + scores2.Str
+	result.Dex = scores.Dex + scores2.Dex
+	result.Con = scores.Con + scores2.Con
+	result.Int = scores.Int + scores2.Int
+	result.Wis = scores.Wis + scores2.Wis
+	result.Cha = scores.Cha + scores2.Cha
+	return result
 }
 
 // SumAbilityScoresRaw calculates the sum of six ability scores in an array of AbilityScore
@@ -153,4 +138,21 @@ func SumModifiers(scores npcgen.AbilityScores) int {
 	sum += GetModifier(scores.Wis)
 	sum += GetModifier(scores.Cha)
 	return sum
+}
+
+// PrintRawAbilityScores prints out a slice of ability scores
+func PrintRawAbilityScores(scores []npcgen.AbilityScore) {
+	for _, score := range scores {
+		fmt.Printf("%v:\t%s\n", score, modifierToString(GetModifier(score)))
+	}
+}
+
+// PrintAbilityScores prints an AbilityScores struct
+func PrintAbilityScores(scores npcgen.AbilityScores) {
+	fmt.Printf("Str: %2v (%s)\n", scores.Str, modifierToString(GetModifier(scores.Str)))
+	fmt.Printf("Dex: %2v (%s)\n", scores.Dex, modifierToString(GetModifier(scores.Dex)))
+	fmt.Printf("Con: %2v (%s)\n", scores.Con, modifierToString(GetModifier(scores.Con)))
+	fmt.Printf("Int: %2v (%s)\n", scores.Int, modifierToString(GetModifier(scores.Int)))
+	fmt.Printf("Wis: %2v (%s)\n", scores.Wis, modifierToString(GetModifier(scores.Wis)))
+	fmt.Printf("Cha: %2v (%s)\n", scores.Cha, modifierToString(GetModifier(scores.Cha)))
 }

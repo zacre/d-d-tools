@@ -1,18 +1,43 @@
 package character
 
-import "github.com/kiwih/npc-gen/npcgen"
+import (
+	"fmt"
+
+	"github.com/kiwih/npc-gen/npcgen"
+)
 
 // Character is a type to hold character data
 type Character struct {
+	Race          Race
+	SubRace       SubRace
+	Class         Class
 	AbilityScores npcgen.AbilityScores
+	Background    Background
 }
 
-// SetAbilityScores sets a character's ability scores to those provided
-func (c *Character) SetAbilityScores(abilityScores npcgen.AbilityScores) {
-	c.AbilityScores = abilityScores
+// GetTotalAbilityScores adds racial bonuses to a character's base ability scores, getting the total ability scores
+func (c *Character) GetTotalAbilityScores() npcgen.AbilityScores {
+	totalBonuses := AddAbilityScores(c.Race.AbilityScoreBonuses, c.SubRace.AbilityScoreBonuses)
+	totalAbilityScores := AddAbilityScores(c.AbilityScores, totalBonuses)
+	return totalAbilityScores
 }
 
 // Print prints the details of a character
 func (c *Character) Print() {
-	PrintAbilityScores(c.AbilityScores)
+	c.PrintTitle()
+	c.PrintAbilityScores()
+}
+
+// PrintTitle prints the 'title' of a character, in format Race Class (Background) - e.g. Human Fighter (Soldier)
+func (c *Character) PrintTitle() {
+	if c.SubRace != (SubRace{}) {
+		fmt.Printf("%s %s (%s)\n", c.SubRace.Name, c.Class.Name, c.Background.Name)
+	} else {
+		fmt.Printf("%s %s (%s)\n", c.Race.Name, c.Class.Name, c.Background.Name)
+	}
+}
+
+// PrintAbilityScores prints the total ability scores of a character, including racial bonuses
+func (c *Character) PrintAbilityScores() {
+	PrintAbilityScores(c.GetTotalAbilityScores())
 }
