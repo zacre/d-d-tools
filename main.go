@@ -11,6 +11,7 @@ import (
 
 	"github.com/kiwih/npc-gen/npcgen"
 	"github.com/zacre/d-d-tools/character"
+	"github.com/zacre/d-d-tools/stats"
 )
 
 // TODO: random races
@@ -154,7 +155,7 @@ func rollAbilityScores(dice ...int) []npcgen.AbilityScore {
 			break
 		}
 	}
-	rawAbilityScores, err := character.RollAbilityScores(diceToRoll, randSeeded)
+	rawAbilityScores, err := stats.RollAbilityScores(diceToRoll, randSeeded)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
@@ -168,7 +169,7 @@ func rollAbilityScoresBestOf3() []npcgen.AbilityScore {
 	largestIndex := 0
 	for i := 0; i < 3; i++ {
 		threeAbilityScores[i] = rollAbilityScores(4)
-		sum := character.SumAbilityScoresRaw(threeAbilityScores[i])
+		sum := stats.SumAbilityScoresRaw(threeAbilityScores[i])
 		if sum > largestSum {
 			largestSum = sum
 			largestIndex = i
@@ -185,7 +186,7 @@ func assignAbilityScoresStraightDown(rawAbilityScores []npcgen.AbilityScore) npc
 	fmt.Println()
 
 	fmt.Printf("The rolled numbers will be assigned to your ability score statistics in the order they were rolled.\n")
-	return character.SimpleAssignAbilityScores(rawAbilityScores)
+	return stats.AbilityScores(rawAbilityScores)
 }
 
 func assignAbilityScoresByChoice(rawAbilityScores []npcgen.AbilityScore) npcgen.AbilityScores {
@@ -221,12 +222,12 @@ func assignAbilityScoresByChoice(rawAbilityScores []npcgen.AbilityScore) npcgen.
 		}
 		// If chosen stat is already assigned, tell the user to choose a different stat
 		if isAssigned[choice-1] {
-			fmt.Printf("You already assigned a value to %s. Choose a different stat (ability scores still to assign: ", character.AbilityNames[choice-1])
+			fmt.Printf("You already assigned a value to %s. Choose a different stat (ability scores still to assign: ", stats.AbilityNames[choice-1])
 			notYetAssigned := make([]string, 0, 6)
 			notYetAssignedNum := make([]int, 0, 6)
 			for i := range isAssigned {
 				if !isAssigned[i] {
-					notYetAssigned = append(notYetAssigned, character.AbilityNames[i])
+					notYetAssigned = append(notYetAssigned, stats.AbilityNames[i])
 					notYetAssignedNum = append(notYetAssignedNum, i)
 				}
 			}
@@ -257,7 +258,7 @@ func assignAbilityScoresByChoice(rawAbilityScores []npcgen.AbilityScore) npcgen.
 			fmt.Printf("WARNING: Choice is outside the range [1-6]. This should never happen, trying again.\n")
 			continue
 		}
-		fmt.Printf("Assigned the score %v to %v\n", rawAbilityScores[statVal], character.AbilityNames[choice-1])
+		fmt.Printf("Assigned the score %v to %v\n", rawAbilityScores[statVal], stats.AbilityNames[choice-1])
 		isAssigned[choice-1] = true
 	}
 	fmt.Printf("Your base ability scores look like: Str %d, Dex %d, Con %d, Int %d, Wis %d, Cha %d\n", as.Str, as.Dex, as.Con, as.Int, as.Wis, as.Cha)
@@ -423,7 +424,7 @@ func getCharacterBackground() character.Background {
 func printCharacter(c character.Character) {
 	fmt.Println("Your character looks like this:")
 	c.Print()
-	tmp := character.SumModifiers(c.GetTotalAbilityScores())
+	tmp := stats.SumModifiers(c.GetTotalAbilityScores())
 	fmt.Println("The sum of the ability score modifiers for these stats is", tmp)
 	decision := ""
 	switch {

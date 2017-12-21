@@ -1,4 +1,4 @@
-package character
+package stats
 
 import (
 	"errors"
@@ -66,7 +66,7 @@ func RollAbilityScores(dice int, randSeeded bool) ([]npcgen.AbilityScore, error)
 }
 
 // SimpleAssignAbilityScores creates an AbilityScores struct from a slice of six ability score values, taking the values in order
-func SimpleAssignAbilityScores(baseScores []npcgen.AbilityScore) npcgen.AbilityScores {
+func AbilityScores(baseScores []npcgen.AbilityScore) npcgen.AbilityScores {
 	var abilityScores npcgen.AbilityScores
 	abilityScores.Str = npcgen.AbilityScore(baseScores[0])
 	abilityScores.Dex = npcgen.AbilityScore(baseScores[1])
@@ -75,12 +75,6 @@ func SimpleAssignAbilityScores(baseScores []npcgen.AbilityScore) npcgen.AbilityS
 	abilityScores.Wis = npcgen.AbilityScore(baseScores[4])
 	abilityScores.Cha = npcgen.AbilityScore(baseScores[5])
 	return abilityScores
-}
-
-// GetModifier obtains the ability score modifier from a raw ability score
-func GetModifier(score npcgen.AbilityScore) int {
-	modifier := int(score/2 - 5)
-	return modifier
 }
 
 func modifierToString(modifier int) string {
@@ -108,7 +102,7 @@ func AddAbilityScores(scores npcgen.AbilityScores, scores2 npcgen.AbilityScores)
 
 // SumAbilityScoresRaw calculates the sum of six ability scores in an array of AbilityScore
 func SumAbilityScoresRaw(scores []npcgen.AbilityScore) int {
-	return SumAbilityScores(SimpleAssignAbilityScores(scores))
+	return SumAbilityScores(AbilityScores(scores))
 }
 
 // SumAbilityScores calculates the sum of the six scores in an AbilityScores struct
@@ -125,34 +119,34 @@ func SumAbilityScores(scores npcgen.AbilityScores) int {
 
 // SumModifiersRaw calculates the sum of the six ability score modifiers calculated from an array of AbilityScore
 func SumModifiersRaw(scores []npcgen.AbilityScore) int {
-	return SumModifiers(SimpleAssignAbilityScores(scores))
+	return SumModifiers(AbilityScores(scores))
 }
 
 // SumModifiers calculates the sum of the six ability score modifiers calculated from an AbilityScores struct
 func SumModifiers(scores npcgen.AbilityScores) int {
 	sum := 0
-	sum += GetModifier(scores.Str)
-	sum += GetModifier(scores.Dex)
-	sum += GetModifier(scores.Con)
-	sum += GetModifier(scores.Int)
-	sum += GetModifier(scores.Wis)
-	sum += GetModifier(scores.Cha)
+	sum += scores.Str.Modifier()
+	sum += scores.Dex.Modifier()
+	sum += scores.Con.Modifier()
+	sum += scores.Int.Modifier()
+	sum += scores.Wis.Modifier()
+	sum += scores.Cha.Modifier()
 	return sum
 }
 
 // PrintRawAbilityScores prints out a slice of ability scores
 func PrintRawAbilityScores(scores []npcgen.AbilityScore) {
 	for _, score := range scores {
-		fmt.Printf("%v:\t%s\n", score, modifierToString(GetModifier(score)))
+		fmt.Printf("%v:\t%s\n", score, modifierToString(score.Modifier()))
 	}
 }
 
 // PrintAbilityScores prints an AbilityScores struct
 func PrintAbilityScores(scores npcgen.AbilityScores) {
-	fmt.Printf("Str: %2v (%s)\n", scores.Str, modifierToString(GetModifier(scores.Str)))
-	fmt.Printf("Dex: %2v (%s)\n", scores.Dex, modifierToString(GetModifier(scores.Dex)))
-	fmt.Printf("Con: %2v (%s)\n", scores.Con, modifierToString(GetModifier(scores.Con)))
-	fmt.Printf("Int: %2v (%s)\n", scores.Int, modifierToString(GetModifier(scores.Int)))
-	fmt.Printf("Wis: %2v (%s)\n", scores.Wis, modifierToString(GetModifier(scores.Wis)))
-	fmt.Printf("Cha: %2v (%s)\n", scores.Cha, modifierToString(GetModifier(scores.Cha)))
+	fmt.Printf("Str: %2v (%s)\n", scores.Str, modifierToString(scores.Str.Modifier()))
+	fmt.Printf("Dex: %2v (%s)\n", scores.Dex, modifierToString(scores.Dex.Modifier()))
+	fmt.Printf("Con: %2v (%s)\n", scores.Con, modifierToString(scores.Con.Modifier()))
+	fmt.Printf("Int: %2v (%s)\n", scores.Int, modifierToString(scores.Int.Modifier()))
+	fmt.Printf("Wis: %2v (%s)\n", scores.Wis, modifierToString(scores.Wis.Modifier()))
+	fmt.Printf("Cha: %2v (%s)\n", scores.Cha, modifierToString(scores.Cha.Modifier()))
 }

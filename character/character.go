@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/kiwih/npc-gen/npcgen"
+	"github.com/zacre/d-d-tools/stats"
 )
 
 // Character is a type to hold character data
@@ -17,8 +18,8 @@ type Character struct {
 
 // GetTotalAbilityScores adds racial bonuses to a character's base ability scores, getting the total ability scores
 func (c *Character) GetTotalAbilityScores() npcgen.AbilityScores {
-	totalBonuses := AddAbilityScores(c.Race.AbilityScoreBonuses, c.SubRace.AbilityScoreBonuses)
-	totalAbilityScores := AddAbilityScores(c.AbilityScores, totalBonuses)
+	totalBonuses := stats.AddAbilityScores(c.Race.AbilityScoreBonuses, c.SubRace.AbilityScoreBonuses)
+	totalAbilityScores := stats.AddAbilityScores(c.AbilityScores, totalBonuses)
 	return totalAbilityScores
 }
 
@@ -39,5 +40,5 @@ func (c *Character) PrintTitle() {
 
 // PrintAbilityScores prints the total ability scores of a character, including racial bonuses
 func (c *Character) PrintAbilityScores() {
-	PrintAbilityScores(c.GetTotalAbilityScores())
+	stats.PrintAbilityScores(c.GetTotalAbilityScores())
 }
