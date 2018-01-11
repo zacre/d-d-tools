@@ -1,6 +1,8 @@
 package main
 
 import (
+	"strings"
+	"bufio"
 	"errors"
 	"fmt"
 	"math/rand"
@@ -12,6 +14,19 @@ import (
 	"github.com/kiwih/npc-gen/npcgen"
 	"github.com/zacre/d-d-tools/character"
 	"github.com/zacre/d-d-tools/stats"
+)
+
+const (
+	_ = iota
+	FourD6
+	StandardArray
+	PointBuy
+	FourD6BestOf3
+	HeroicArray
+	FiveD6
+	ThreeD6
+	FourD6Straight
+	ThreeD6Straight
 )
 
 // TODO: random races
@@ -26,7 +41,7 @@ func createCharacter() {
 	fmt.Printf("First, what method of creating a character would you like to use?\n")
 	fmt.Print(`1. I already have a concept I would like to develop
 2. I want to determine my character from what stats I get
-`)
+> `)
 	var choice int
 	err := errors.New("null")
 	for err != nil {
@@ -51,7 +66,7 @@ func createCharacter() {
 	var abilityScores npcgen.AbilityScores
 	switch choice {
 	case 1:
-		// Character creation as shown in PhB (TODO) race -> class -> ability scores -> background
+		// Character creation as shown in PhB race -> class -> ability scores -> background
 		race, subrace = getCharacterRace()
 		class = getCharacterClass()
 		abilityScores = getCharacterAbilityScores()
@@ -78,17 +93,16 @@ func createCharacter() {
 func getCharacterAbilityScores() npcgen.AbilityScores {
 	var rawAbilityScores []npcgen.AbilityScore
 	fmt.Println("What method would you like to use to determine your ability scores?")
-	fmt.Print(
-		`1. Rolling 4d6 drop the lowest (Sum Avg: 73, SD: 7)
-2. Standard array (15, 14, 13, 12, 10, 8. Sum: 72)
-3. Best of 3: Rolling 4d6 drop the lowest (Sum Avg: 79, SD: 5)
-4. Heroic array (16, 15, 14, 12, 11, 10. Sum: 78)
-5. Rolling 5d6 drop the two lowest (Sum Avg: 81, SD: 6)
-6. Rolling 3d6 (Sum Avg: 63, SD: 7)
-7. Rolling 4d6 drop the lowest straight down
-8. Rolling 3d6 straight down
-`)
-	fmt.Printf("Enter your choice: ")
+	fmt.Printf(`%d. Rolling 4d6 drop the lowest (Sum Avg: 73, SD: 7)
+%d. Standard array (15, 14, 13, 12, 10, 8. Sum: 72)
+%d. Best of 3: Rolling 4d6 drop the lowest (Sum Avg: 79, SD: 5)
+%d. Point buy (27pts, base 8; 9: 1, 10: 2, 11: 3, 12: 4, 13: 5, 14: 7, 15: 9)
+%d. Heroic array (16, 15, 14, 12, 11, 10. Sum: 78)
+%d. Rolling 5d6 drop the two lowest (Sum Avg: 81, SD: 6)
+%d. Rolling 3d6 (Sum Avg: 63, SD: 7)
+%d. Rolling 4d6 drop the lowest straight down
+%d. Rolling 3d6 straight down
+> `, FourD6, StandardArray, PointBuy, FourD6BestOf3, HeroicArray, FiveD6, ThreeD6, FourD6Straight, ThreeD6Straight)
 	// Choose method (4d6 drop low, 3d6, standard array, etc.)
 	var choice int
 	err := errors.New("null")
@@ -96,12 +110,12 @@ func getCharacterAbilityScores() npcgen.AbilityScores {
 		input := ""
 		_, err = fmt.Scanf("%s\n", &input)
 		if err != nil {
-			fmt.Printf("Invalid input, expecting a number between 1 and 8\n")
+			fmt.Printf("Invalid input, expecting a number between %d and %d\n", FourD6, ThreeD6Straight)
 			continue
 		}
 		choice, err = strconv.Atoi(string([]rune(input)[0]))
-		if err != nil || choice < 1 || choice > 8 {
-			fmt.Printf("Invalid input, expecting a number between 1 and 8\n")
+		if err != nil || choice < FourD6 || choice > ThreeD6Straight {
+			fmt.Printf("Invalid input, expecting a number between %d and %d\n", FourD6, ThreeD6Straight)
 			continue
 		}
 	}
@@ -112,22 +126,25 @@ func getCharacterAbilityScores() npcgen.AbilityScores {
 
 	// Determine base ability scores (from rolling, point buy, etc.)
 	switch choice {
-	case 1:
+	case FourD6:
 		rawAbilityScores = rollAbilityScores(4)
-	case 2:
+	case StandardArray:
 		rawAbilityScores = []npcgen.AbilityScore{15, 14, 13, 12, 10, 8}
-	case 3:
+	case PointBuy:
+		fmt.Println("Error 501: Not implemented")
+		os.Exit(-1)
+	case FourD6BestOf3:
 		rawAbilityScores = rollAbilityScoresBestOf3()
-	case 4:
+	case HeroicArray:
 		rawAbilityScores = []npcgen.AbilityScore{16, 15, 14, 12, 11, 10}
-	case 5:
+	case FiveD6:
 		rawAbilityScores = rollAbilityScores(5)
-	case 6:
+	case ThreeD6:
 		rawAbilityScores = rollAbilityScores(3)
-	case 7:
+	case FourD6Straight:
 		rawAbilityScores = rollAbilityScores(4)
 		assignStraight = true
-	case 8:
+	case ThreeD6Straight:
 		rawAbilityScores = rollAbilityScores(3)
 		assignStraight = true
 	}
@@ -202,8 +219,24 @@ func assignAbilityScoresByChoice(rawAbilityScores []npcgen.AbilityScore) npcgen.
 	// fmt.Println("Enter 1 for Str, 2 for Dex, 3 for Con, 4 for Int, 5 for Wis, or 6 for Cha")
 	var isAssigned [6]bool
 	for statVal := 0; statVal < 6; statVal++ {
-		fmt.Printf("Which ability score would you like to be %v? (1. Str  2. Dex  3. Con  4. Int  5. Wis  6. Cha): ", rawAbilityScores[statVal])
 	abilityscorechoice:
+		fmt.Printf("Which ability score would you like to be %v?", rawAbilityScores[statVal])
+		fmt.Printf(" (")
+		notYetAssigned := make([]string, 0, 6)
+		notYetAssignedNum := make([]int, 0, 6)
+		for i := range isAssigned {
+			if !isAssigned[i] {
+				notYetAssigned = append(notYetAssigned, stats.AbilityNames[i])
+				notYetAssignedNum = append(notYetAssignedNum, i)
+			}
+		}
+		for i, statName := range notYetAssigned {
+			fmt.Printf("%d: %s", notYetAssignedNum[i]+1, statName)
+			if i < len(notYetAssigned)-1 {
+				fmt.Printf(", ")
+			}
+		}
+		fmt.Printf("): ")
 		// Get user input
 		var choice int
 		err := errors.New("null")
@@ -222,22 +255,7 @@ func assignAbilityScoresByChoice(rawAbilityScores []npcgen.AbilityScore) npcgen.
 		}
 		// If chosen stat is already assigned, tell the user to choose a different stat
 		if isAssigned[choice-1] {
-			fmt.Printf("You already assigned a value to %s. Choose a different stat (ability scores still to assign: ", stats.AbilityNames[choice-1])
-			notYetAssigned := make([]string, 0, 6)
-			notYetAssignedNum := make([]int, 0, 6)
-			for i := range isAssigned {
-				if !isAssigned[i] {
-					notYetAssigned = append(notYetAssigned, stats.AbilityNames[i])
-					notYetAssignedNum = append(notYetAssignedNum, i)
-				}
-			}
-			for i, statName := range notYetAssigned {
-				fmt.Printf("%d: %s", notYetAssignedNum[i]+1, statName)
-				if i < len(notYetAssigned)-1 {
-					fmt.Printf(", ")
-				}
-			}
-			fmt.Print("): ")
+			fmt.Printf("You already assigned a value to %s. Choose a different stat.\n", stats.AbilityNames[choice-1])
 			goto abilityscorechoice
 		}
 		// Assign the correct ability score
@@ -272,7 +290,7 @@ func getCharacterRace() (character.Race, character.SubRace) {
 2. Elf (+2 Dex)
 3. Halfling (+2 Dex, small)
 4. Human (+1 to all stats)
-`)
+> `)
 	var choice int
 	err := errors.New("null")
 	for err != nil {
@@ -297,7 +315,7 @@ func getCharacterRace() (character.Race, character.SubRace) {
 		fmt.Println(race.Name, "has subraces! Please pick a subrace as well:")
 		fmt.Print(`1. Hill Dwarf (+1 Wis)
 2. Mountain Dwarf (+2 Str)
-`)
+> `)
 		err := errors.New("null")
 		for err != nil {
 			input := ""
@@ -325,7 +343,7 @@ func getCharacterRace() (character.Race, character.SubRace) {
 		fmt.Print(`1. High Elf (+1 Int)
 2. Wood Elf (+1 Wis)
 3. Dark Elf (+1 Cha, sunlight sensitivity)
-`)
+> `)
 		err := errors.New("null")
 		for err != nil {
 			input := ""
@@ -354,7 +372,7 @@ func getCharacterRace() (character.Race, character.SubRace) {
 		fmt.Println(race.Name, "has subraces! Please pick a subrace as well:")
 		fmt.Print(`1. Lightfoot Halfling (+1 Cha)
 2. Stout Halfling (+1 Con)
-`)
+> `)
 		err := errors.New("null")
 		for err != nil {
 			input := ""
@@ -391,33 +409,43 @@ func getCharacterRace() (character.Race, character.SubRace) {
 
 func getCharacterClass() character.Class {
 	fmt.Println("Enter your class:")
+	fmt.Print("> ")
 	input := ""
 	err := errors.New("null")
+	// Loop until valid input
 	for err != nil {
-		_, err = fmt.Scanf("%s\n", &input)
+		// Whoa, fmt.Scanln() doesn't like strings with spaces in it -- do this instead
+		reader := bufio.NewReader(os.Stdin)
+		input, err = reader.ReadString('\n')
 		if err != nil {
-			fmt.Printf("Scanf error\n")
+			fmt.Printf("Reader error\n")
 		}
 	}
 	fmt.Println()
 	var class character.Class
-	class.Name = input
+	// Remove training newline
+	class.Name = strings.TrimSpace(input)
 	return class
 }
 
 func getCharacterBackground() character.Background {
 	fmt.Println("Enter your background:")
+	fmt.Print("> ")
 	input := ""
 	err := errors.New("null")
+	// Loop until valid input
 	for err != nil {
-		_, err = fmt.Scanf("%s\n", &input)
+		// Whoa, fmt.Scanln() doesn't like strings with spaces in it -- do this instead
+		reader := bufio.NewReader(os.Stdin)
+		input, err = reader.ReadString('\n')
 		if err != nil {
-			fmt.Printf("Scanf error\n")
+			fmt.Printf("Reader error\n")
 		}
 	}
 	fmt.Println()
 	var background character.Background
-	background.Name = input
+	// Remove training newline
+	background.Name = strings.TrimSpace(input)
 	return background
 }
 
